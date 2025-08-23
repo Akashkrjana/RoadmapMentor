@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roadmap Mentor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: "Soothing Sage" - A calm and focused theme using warm neutrals (stone, slate) with a gentle sage green accent for interactive elements. -->
+    <!-- Application Structure Plan: The application is designed as a classic single-page application with a fixed sidebar for primary navigation and a dynamic main content area. This structure was chosen because the source report outlines several distinct, self-contained sections (4 roadmaps, 2 resource pages). This sidebar navigation allows users to instantly switch between these sections without page reloads, providing a fluid and intuitive user experience. The content within each roadmap is organized into collapsible accordion cards to manage information density, preventing users from being overwhelmed by a long list of topics and allowing them to focus on one day at a time. This prioritizes usability and guided learning over a simple data dump. -->
+    <!-- Visualization & Content Choices: The report's content is primarily structured text. The main "visualization" is the interactive timeline/checklist itself. Report Info: Daily learning topics, descriptions, links. -> Goal: Organize & Inform. -> Presentation: Collapsible accordion cards created with HTML/Tailwind. -> Interaction: Clicking a card header toggles its content visibility. -> Justification: Manages cognitive load for dense, multi-day roadmaps. -> Library/Method: Vanilla JavaScript for DOM manipulation. Report Info: Navigation between roadmaps/pages. -> Goal: Organize. -> Presentation: A fixed sidebar navigation menu. -> Interaction: Clicking a link dynamically renders the corresponding content in the main view. -> Justification: Standard, intuitive SPA navigation pattern. -> Library/Method: Vanilla JavaScript. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
+            padding: 0 1.5rem;
+        }
+        .accordion-item.open .accordion-content {
+            max-height: 1000px; /* Increased to accommodate notes */
+            padding: 1rem 1.5rem;
+        }
+        .accordion-item.open .accordion-arrow {
+            transform: rotate(180deg);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex min-h-screen">
+
+    <aside id="sidebar" class="bg-white w-64 p-6 border-r border-slate-200 fixed top-0 left-0 h-full z-20 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+        <h1 class="text-2xl font-bold text-slate-900 mb-8">Roadmap Mentor</h1>
+        <nav id="main-nav">
+            <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Roadmaps</h2>
+            <ul class="space-y-2">
+                <li><a href="#data-science" class="nav-link flex items-center p-2 rounded-lg text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200">
+                    <span class="w-6 h-6 mr-3">📊</span> Data Science
+                </a></li>
+                <li><a href="#dsa-java" class="nav-link flex items-center p-2 rounded-lg text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200">
+                    <span class="w-6 h-6 mr-3">☕</span> DSA in Java
+                </a></li>
+                <li><a href="#aptitude-prep" class="nav-link flex items-center p-2 rounded-lg text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200">
+                    <span class="w-6 h-6 mr-3">🧠</span> Aptitude Prep
+                </a></li>
+                <li><a href="#core-cs" class="nav-link flex items-center p-2 rounded-lg text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200">
+                    <span class="w-6 h-6 mr-3">💻</span> Core CS Subjects
+                </a></li>
+            </ul>
+            <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mt-8 mb-3">Hubs</h2>
+            <ul class="space-y-2">
+                <li><a href="#resources" class="nav-link flex items-center p-2 rounded-lg text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200">
+                    <span class="w-6 h-6 mr-3">📚</span> Resources
+                </a></li>
+                <li><a href="#mock-tests" class="nav-link flex items-center p-2 rounded-lg text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200">
+                    <span class="w-6 h-6 mr-3">🎯</span> Mock Tests
+                </a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <div id="mobile-menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-10 hidden md:hidden"></div>
+    
+    <button id="mobile-menu-button" class="md:hidden fixed top-4 left-4 z-30 p-2 bg-white rounded-md shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+        </svg>
+    </button>
+
+    <main class="flex-1 md:ml-64 p-4 sm:p-6 md:p-8">
+        <div id="content-container" class="max-w-4xl mx-auto">
+        </div>
+    </main>
+
+<script>
+const appData = {
+    "data-science": {
+        title: "90-Day Data Science Roadmap",
+        intro: "This roadmap is designed to take an absolute beginner to a point where they can confidently build and deploy a machine learning model. The curriculum is structured into three distinct phases: Foundations, Core Machine Learning, and Specialization, emphasizing hands-on learning with key libraries and platforms.",
+        days: Array.from({ length: 90 }, (_, i) => {
+            const day = i + 1;
+            let data = { day, topic: `Day ${day} Topic`, description: 'Placeholder description.', resources: [] };
+            if (day <= 7) { // Week 1: Python for Data Science
+                const topics = [
+                    { topic: "Python Basics: Variables & Data Types", description: "Learn the fundamental building blocks of Python, including how to store information in variables and understand different data types like integers, strings, and booleans.", resources: [{ name: "freeCodeCamp", url: "https://www.freecodecamp.org/learn/scientific-computing-with-python/" }, { name: "HackerRank", url: "https://www.hackerrank.com/domains/python" }] },
+                    { topic: "Python Control Flow: Loops & Conditionals", description: "Master how to control the flow of your programs using if-else statements for decision-making and for/while loops for repetitive tasks.", resources: [{ name: "Codecademy", url: "https://www.codecademy.com/learn/learn-python-3" }, { name: "LeetCode", url: "https://leetcode.com/problemset/all/?topicSlugs=array-and-string" }] },
+                    { topic: "Python Functions & Data Structures", description: "Understand how to write reusable blocks of code with functions and learn about core data structures like lists, tuples, and dictionaries.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/python-programming-language/" }, { name: "HackerRank", url: "https://www.hackerrank.com/domains/python" }] },
+                    { topic: "Introduction to NumPy", description: "Learn the basics of NumPy, the fundamental package for numerical computing in Python. Understand how to create and manipulate N-dimensional arrays.", resources: [{ name: "NumPy Official Docs", url: "https://numpy.org/doc/stable/user/quickstart.html" }, { name: "Kaggle", url: "https://www.kaggle.com/learn/numpy" }] },
+                    { topic: "NumPy Array Operations", description: "Dive deeper into NumPy by performing mathematical and logical operations on arrays. Learn about array indexing, slicing, and broadcasting.", resources: [{ name: "DataCamp", url: "https://www.datacamp.com/community/tutorials/python-numpy-tutorial" }, { name: "Kaggle", url: "https://www.kaggle.com/learn/numpy" }] },
+                    { topic: "Introduction to Pandas", description: "Get started with Pandas, the most popular library for data analysis. Learn about its two core data structures: Series and DataFrame.", resources: [{ name: "Pandas Official Docs", url: "https://pandas.pydata.org/docs/user_guide/10min.html" }, { name: "Kaggle", url: "https://www.kaggle.com/learn/pandas" }] },
+                    { topic: "Pandas DataFrame Manipulation", description: "Learn essential DataFrame operations, including selecting rows and columns, filtering data based on conditions, and handling missing values.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/python-pandas-dataframe/" }, { name: "Kaggle", url: "https://www.kaggle.com/learn/pandas" }] },
+                ];
+                data = { ...data, ...topics[i] };
+            } else if (day <= 14) { // Week 2: Mathematical Foundations
+                const topics = [
+                    { topic: "Linear Algebra: Vectors & Matrices", description: "Understand vectors and matrices, the fundamental objects of linear algebra, and how they are represented in NumPy.", resources: [{ name: "Khan Academy", url: "https://www.khanacademy.org/math/linear-algebra" }, { name: "3Blue1Brown", url: "https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab" }] },
+                    { topic: "Descriptive Statistics: Central Tendency", description: "Learn to calculate and interpret measures of central tendency: mean, median, and mode.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/statistics-for-data-science/" }, { name: "Khan Academy", url: "https://www.khanacademy.org/math/statistics-probability" }] },
+                    { topic: "Descriptive Statistics: Variability", description: "Learn to measure the spread of your data using variance, standard deviation, and range.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/statistics-for-data-science/" }, { name: "Khan Academy", url: "https://www.khanacademy.org/math/statistics-probability" }] },
+                    { topic: "Intro to Calculus: Derivatives", description: "Grasp the concept of a derivative as a rate of change, a core idea behind training machine learning models.", resources: [{ name: "Khan Academy", url: "https://www.khanacademy.org/math/calculus-1" }, { name: "3Blue1Brown", url: "https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr" }] },
+                    { topic: "Calculus: Gradient Descent Intuition", description: "Develop an intuitive understanding of gradient descent, the optimization algorithm that powers most of machine learning.", resources: [{ name: "StatQuest", url: "https://www.youtube.com/watch?v=s-vcfmrKq7c" }, { name: "Google AI", url: "https://developers.google.com/machine-learning/crash-course/reducing-loss/gradient-descent" }] },
+                    { topic: "Project: Exploratory Data Analysis (EDA) Part 1", description: "Apply your stats and pandas skills. Choose a dataset from Kaggle and perform initial EDA: load data, check for missing values, and calculate summary statistics.", resources: [{ name: "Kaggle Datasets", url: "https://www.kaggle.com/datasets" }] },
+                    { topic: "Project: Exploratory Data Analysis (EDA) Part 2", description: "Continue your EDA project. Practice cleaning the data (handling missing values, correcting data types) and preparing it for visualization.", resources: [{ name: "Kaggle Notebooks", url: "https://www.kaggle.com/notebooks" }] },
+                ];
+                data = { ...data, ...topics[i-7] };
+            } else if (day <= 21) { // Week 3: Probability & Data Visualization
+                const topics = [
+                    { topic: "Probability: Core Concepts", description: "Learn about basic probability theory, random variables, and the difference between discrete and continuous distributions.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/probability-for-data-science/" }, { name: "Khan Academy", url: "https://www.khanacademy.org/math/statistics-probability/probability-library" }] },
+                    { topic: "Common Probability Distributions", description: "Study important distributions like the Normal (Gaussian) and Binomial distributions and their relevance in data science.", resources: [{ name: "StatQuest", url: "https://www.youtube.com/watch?v=r-n_d5a7k_k" }, { name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/normal-distribution/" }] },
+                    { topic: "Introduction to Matplotlib", description: "Learn the fundamentals of Matplotlib, the most widely used plotting library in Python, to create basic charts like line plots and scatter plots.", resources: [{ name: "Matplotlib Docs", url: "https://matplotlib.org/stable/tutorials/pyplot.html" }, { name: "Kaggle", url: "https://www.kaggle.com/learn/data-visualization" }] },
+                    { topic: "Introduction to Seaborn", description: "Explore Seaborn, a library built on top of Matplotlib that provides a high-level interface for drawing attractive and informative statistical graphics.", resources: [{ name: "Seaborn Docs", url: "https://seaborn.pydata.org/tutorial.html" }, { name: "Kaggle", url: "https://www.kaggle.com/learn/data-visualization" }] },
+                    { topic: "Advanced Visualization: Histograms & Box Plots", description: "Use Matplotlib and Seaborn to create histograms to view data distributions and box plots to identify outliers.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/box-plot-in-python-using-matplotlib/" }] },
+                    { topic: "Project: Visualization for EDA", description: "Return to your EDA project. Create various plots (histograms, scatter plots, bar charts) to uncover patterns, relationships, and insights in your data.", resources: [{ name: "Kaggle Notebooks", url: "https://www.kaggle.com/notebooks" }] },
+                    { topic: "Review and Consolidate Foundations", description: "Review all the topics from the first three weeks. Solidify your understanding of Python, NumPy, Pandas, Math, and Visualization.", resources: [] },
+                ];
+                data = { ...data, ...topics[i-14] };
+            } else if (day <= 35) { // Weeks 4-5: Supervised Learning
+                const topics = [
+                    { topic: "Intro to Machine Learning & Scikit-learn", description: "Understand the basic concepts of ML: supervised vs. unsupervised learning. Get familiar with the Scikit-learn API.", resources: [{ name: "Scikit-learn Docs", url: "https://scikit-learn.org/stable/getting_started.html" }] },
+                    { topic: "Linear Regression Theory", description: "Learn the theory behind Linear Regression, one of the simplest and most interpretable machine learning algorithms for predicting continuous values.", resources: [{ name: "StatQuest", url: "https://www.youtube.com/watch?v=nk2CQITm_eo" }] },
+                    { topic: "Linear Regression in Practice", description: "Implement Linear Regression using Scikit-learn on a real dataset. Learn how to train the model and make predictions.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/linear-regression-python-implementation/" }, { name: "Kaggle", url: "https://www.kaggle.com/code/startupsci/titanic-data-science-solutions" }] },
+                    { topic: "Logistic Regression Theory", description: "Understand how Logistic Regression is used for binary classification problems, despite its name.", resources: [{ name: "StatQuest", url: "https://www.youtube.com/watch?v=yIYKR4sgzI8" }] },
+                    { topic: "Logistic Regression in Practice", description: "Implement Logistic Regression using Scikit-learn. Apply it to a classification task like spam detection or customer churn.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/understanding-logistic-regression/" }, { name: "Kaggle", url: "https://www.kaggle.com/code/startupsci/titanic-data-science-solutions" }] },
+                    { topic: "Decision Trees Theory", description: "Learn the intuition behind Decision Trees, a versatile algorithm for both classification and regression tasks.", resources: [{ name: "StatQuest", url: "https://www.youtube.com/watch?v=7VeUPuFGJHk" }] },
+                    { topic: "Decision Trees in Practice", description: "Implement a Decision Tree classifier using Scikit-learn and visualize the resulting tree to understand its decision-making process.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/decision-tree-implementation-python/" }] },
+                    { topic: "Ensemble Learning: Random Forests", description: "Understand the concept of ensemble learning and how Random Forests improve upon single Decision Trees by combining many of them.", resources: [{ name: "StatQuest", url: "https://www.youtube.com/watch?v=J4W_rPggl_c" }] },
+                    { topic: "Random Forests in Practice", description: "Apply the Random Forest algorithm to a dataset and compare its performance against a single Decision Tree.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/random-forest-regression-in-python/" }] },
+                    { topic: "Model Evaluation: Classification Metrics", description: "Learn how to evaluate classification models using metrics like Accuracy, Precision, Recall, and the F1-Score.", resources: [{ name: "StatQuest", url: "https://www.youtube.com/watch?v=4jRBRDbJemM" }] },
+                    { topic: "Model Evaluation: Confusion Matrix", description: "Understand the Confusion Matrix, a table that provides a more detailed breakdown of a classifier's performance.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/confusion-matrix-machine-learning/" }] },
+                    { topic: "Model Evaluation: Regression Metrics", description: "Learn how to evaluate regression models using metrics like Mean Absolute Error (MAE), Mean Squared Error (MSE), and R-squared.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/python-check-performance-of-regression-model/" }] },
+                    { topic: "Cross-Validation", description: "Understand the importance of Cross-Validation for obtaining a more robust estimate of your model's performance on unseen data.", resources: [{ name: "StatQuest", url: "https://www.youtube.com/watch?v=fSytzGwwBVw" }] },
+                    { topic: "Supervised Learning Review", description: "Review and consolidate your knowledge of all the supervised learning algorithms and evaluation techniques covered so far.", resources: [] },
+                ];
+                data = { ...data, ...topics[i-21] };
+            } else if (day <= 56) { // Weeks 6-8: Advanced Topics & Deep Learning
+                const topics = [
+                    { topic: "Support Vector Machines (SVM) Theory", description: "Learn the intuition behind SVMs and how they find the optimal hyperplane to separate data points.", resources: [{ name: "StatQuest", url: "https://www.youtube.com/watch?v=efR1C6CvhmE" }] },
+                    { topic: "SVM in Practice", description: "Implement SVMs for classification tasks and learn about the role of different kernels (linear, RBF).", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/support-vector-machine-in-machine-learning/" }] },
+                    { topic: "Unsupervised Learning: K-Means Clustering Theory", description: "Dive into unsupervised learning with K-Means, an algorithm for grouping data points into clusters based on similarity.", resources: [{ name: "StatQuest", url: "https://www.youtube.com/watch?v=4b5d3muPQmA" }] },
+                    { topic: "K-Means Clustering in Practice", description: "Apply K-Means using Scikit-learn to segment a dataset (e.g., customer segmentation) and interpret the resulting clusters.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/k-means-clustering-introduction/" }] },
+                    { topic: "Feature Engineering & Selection", description: "Learn techniques for creating new features from existing data and selecting the most important ones to improve model performance.", resources: [{ name: "Kaggle", url: "https://www.kaggle.com/learn/feature-engineering" }] },
+                    { topic: "Hyperparameter Tuning", description: "Understand the difference between parameters and hyperparameters, and learn how to use techniques like Grid Search to find the best hyperparameters for your model.", resources: [{ name: "StatQuest", url: "https://www.youtube.com/watch?v=fSytzGwwBVw" }] },
+                    { topic: "Kaggle Mini-Project", description: "Participate in a beginner-friendly Kaggle competition (e.g., Titanic). Apply the full machine learning pipeline: EDA, feature engineering, model selection, and tuning.", resources: [{ name: "Kaggle Competitions", url: "https://www.kaggle.com/competitions" }] },
+                    { topic: "What are Neural Networks?", description: "Get a high-level introduction to the concepts behind neural networks, the building blocks of deep learning.", resources: [{ name: "3Blue1Brown", url: "https://www.youtube.com/watch?v=aircAruvnKk" }] },
+                    { topic: "Intro to TensorFlow & Keras", description: "Get started with TensorFlow and its high-level API, Keras. Learn how to build a simple sequential neural network.", resources: [{ name: "TensorFlow Docs", url: "https://www.tensorflow.org/tutorials/keras/classification" }] },
+                    { topic: "Building your First ANN", description: "Build and train a simple Artificial Neural Network (ANN) for a classification task on a tabular dataset.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/introduction-to-tensorflow/" }] },
+                ];
+                const currentTopic = topics[i-35];
+                if (currentTopic) {
+                    data = { ...data, ...currentTopic };
+                }
+            } else if (day <= 90) { // Weeks 9-13: Specialization & Portfolio
+                const topics = [
+                    { topic: "Intro to NLP: Text Preprocessing", description: "Begin your NLP specialization by learning essential text preprocessing techniques like tokenization, stop word removal, stemming, and lemmatization.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/text-preprocessing-in-python/" }] },
+                    { topic: "Feature Extraction: Bag-of-Words & TF-IDF", description: "Learn how to convert text data into numerical vectors that machine learning models can understand using Bag-of-Words and TF-IDF.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/tf-idf-model-for-page-ranking/" }] },
+                    { topic: "Project: Sentiment Analysis", description: "Build a sentiment analysis model to classify text (e.g., movie reviews) as positive or negative.", resources: [{ name: "Kaggle", url: "https://www.kaggle.com/datasets/lakshmi25npathi/imdb-dataset-of-50k-movie-reviews" }] },
+                    { topic: "Intro to Transformers & BERT", description: "Get a high-level overview of modern NLP architectures like Transformers and pre-trained models like BERT.", resources: [{ name: "Hugging Face", url: "https://huggingface.co/learn/nlp-course/chapter1/1" }] },
+                    { topic: "End-to-End Project: Select a Dataset", description: "Start your capstone project. Choose a unique and interesting dataset from Kaggle that aligns with your interests.", resources: [{ name: "Kaggle Datasets", url: "https://www.kaggle.com/datasets" }] },
+                    { topic: "Project: Full EDA and Feature Engineering", description: "Apply all your EDA and feature engineering skills to your chosen project dataset. Document your findings in a Jupyter Notebook.", resources: [] },
+                    { topic: "Project: Model Building and Tuning", description: "Build, train, and tune multiple machine learning models for your project. Select the best-performing model based on robust evaluation.", resources: [] },
+                    { topic: "Intro to Model Deployment with Flask", description: "Learn the basics of Flask, a lightweight web framework for Python, and how to create a simple API endpoint for your model.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/deploying-machine-learning-model-using-flask/" }] },
+                    { topic: "Project: Deploy Your Model", description: "Deploy your trained model as a simple web application using Flask. This is a crucial step for building a portfolio.", resources: [] },
+                    { topic: "Portfolio: GitHub Profile", description: "Structure your GitHub profile as a professional portfolio. Create a profile README and ensure your project repositories are well-documented.", resources: [{ name: "GitHub Docs", url: "https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-profile/customizing-your-profile/managing-your-profile-readme" }] },
+                    { topic: "Interview Prep: SQL", description: "Practice common SQL interview questions, focusing on joins, aggregations, and window functions.", resources: [{ name: "LeetCode", url: "https://leetcode.com/problemset/database/" }] },
+                    { topic: "Interview Prep: Probability & Statistics", description: "Review key probability and statistics concepts that frequently appear in data science interviews.", resources: [{ name: "StrataScratch", url: "https://www.stratascratch.com/blog/data-science-interview-questions-statistics-and-probability/" }] },
+                    { topic: "Interview Prep: ML Concepts", description: "Review the theory behind all the machine learning algorithms you've learned. Be prepared to explain them intuitively.", resources: [] },
+                    { topic: "Final Review and Next Steps", description: "Consolidate your learning, polish your portfolio, and start exploring more advanced topics or job applications.", resources: [] },
+                ];
+                const currentTopic = topics[i-56];
+                if (currentTopic) {
+                    data = { ...data, ...currentTopic };
+                }
+            }
+            return data;
+        })
+    },
+    "dsa-java": {
+        title: "90-Day DSA in Java Roadmap",
+        intro: "This roadmap mirrors the structure and philosophy of Kunal Kushwaha's renowned Java + DSA course. It provides a day-by-day schedule to guide you through core concepts, from Java fundamentals to advanced data structures like Graphs and Dynamic Programming, supplemented with targeted LeetCode practice.",
+        days: Array.from({ length: 90 }, (_, i) => {
+            const day = i + 1;
+            let data = { day, topic: `Day ${day} Topic`, description: 'Placeholder description.', resources: [] };
+            if (day <= 15) { // Phase 1: Java & Programming Fundamentals
+                const topics = [
+                    { day: 1, topic: "Git & GitHub", description: "Understand version control basics, an essential tool for every developer. Learn how to set up Git and manage your code on GitHub.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=MBlQ4_sN_y4" }, { name: "GitHub Docs", url: "https://docs.github.com/en/get-started" }] },
+                    { day: 2, topic: "Java Basics: Setup & Syntax", description: "Install the Java Development Kit (JDK) and an IDE. Write your first 'Hello, World!' program and learn about basic Java syntax, variables, and data types.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=TAtrPoaJ7gc" }, { name: "HackerRank", url: "https://www.hackerrank.com/domains/java" }] },
+                    { day: 3, topic: "Conditionals & Loops", description: "Learn how to make decisions in your code with `if-else` statements and how to perform repetitive tasks using `for` and `while` loops.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=ldYkFdu5FJk" }, { name: "LeetCode", url: "https://leetcode.com/problemset/all/" }] },
+                    { day: 4, topic: "Java Methods/Functions", description: "Understand how to write reusable blocks of code with methods, including concepts like parameters, return types, and method overloading.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=v0N8zFq_S2k" }] },
+                    { day: 5, topic: "Practice: Basic Java Problems", description: "Solve a set of basic programming problems to solidify your understanding of Java syntax, loops, and methods.", resources: [{ name: "LeetCode", url: "https://leetcode.com/problemset/all/?difficulty=EASY&topicSlugs=array-and-string" }] },
+                    { day: 6, topic: "Arrays & ArrayList", description: "Dive into the most fundamental data structure. Learn about arrays in Java, their memory allocation, and the more flexible ArrayList class.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=n60Dn0UsbEk" }] },
+                    { day: 7, topic: "Practice: Array Problems", description: "Solve beginner-level array problems on LeetCode.", resources: [{ name: "LeetCode", url: "https://leetcode.com/tag/array/" }] },
+                    { day: 8, topic: "Searching: Linear Search", description: "Learn the simple but important Linear Search algorithm.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=f8hXR_H6Kwg" }] },
+                    { day: 9, topic: "Searching: Binary Search", description: "Master the Binary Search algorithm, a highly efficient method for finding an element in a sorted array.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=f8hXR_H6Kwg" }] },
+                    { day: 10, topic: "Practice: Binary Search Problems", description: "Solve a curated list of Binary Search problems on LeetCode to understand its various applications.", resources: [{ name: "LeetCode", url: "https://leetcode.com/tag/binary-search/" }] },
+                    { day: 11, topic: "Sorting: Bubble, Selection, Insertion", description: "Learn the theory and implementation of three fundamental sorting algorithms: Bubble Sort, Selection Sort, and Insertion Sort.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=Z_v2F_cggmg" }] },
+                    { day: 12, topic: "Sorting: Cyclic Sort", description: "Learn the Cyclic Sort pattern, a useful technique for problems involving arrays with numbers in a specific range.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=JfinxytTYFQ" }] },
+                    { day: 13, topic: "Strings & String Builder", description: "Understand how strings work in Java, their immutability, and the use of StringBuilder for efficient string manipulation.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=zL1B2-s_4Q4" }] },
+                    { day: 14, topic: "Intro to Recursion", description: "Begin the journey into recursion. Understand the concept of the call stack and how to think recursively.", resources: [{ name: "Kunal's Recursion Playlist", url: "https://www.youtube.com/watch?v=M2uO2n524Sg" }] },
+                    { day: 15, topic: "Practice: Recursion Basics", description: "Solve basic recursion problems like factorial and Fibonacci numbers.", resources: [{ name: "LeetCode", url: "https://leetcode.com/explore/learn/card/recursion-i/" }] },
+                ];
+                data = topics[i];
+            } else if (day <= 60) { // Phases 2 & 3
+                const topics = [
+                    { day: 46, topic: "Recursion: Merge Sort", description: "Learn the Merge Sort algorithm, a highly efficient, recursive, divide-and-conquer sorting algorithm.", resources: [{ name: "Kunal's Recursion Playlist", url: "https://www.youtube.com/watch?v=iKgaK6b_3cI" }] },
+                    { day: 47, topic: "Recursion: Quick Sort", description: "Learn the Quick Sort algorithm, another efficient, recursive sorting algorithm that uses a pivot strategy.", resources: [{ name: "Kunal's Recursion Playlist", url: "https://www.youtube.com/watch?v=Z_v2F_cggmg" }] },
+                    { day: 48, topic: "Backtracking", description: "Understand the backtracking approach, a refinement of recursion for solving problems that involve exploring all possible solutions.", resources: [{ name: "Kunal's Recursion Playlist", url: "https://www.youtube.com/watch?v=zg5v2rlV1tM" }] },
+                    { day: 49, topic: "Practice: Backtracking (Mazes)", description: "Solve classic backtracking problems like finding paths in a maze.", resources: [{ name: "LeetCode", url: "https://leetcode.com/tag/backtracking/" }] },
+                    { day: 50, topic: "Practice: Backtracking (N-Queens)", description: "Tackle the famous N-Queens problem using backtracking.", resources: [{ name: "LeetCode", url: "https://leetcode.com/problems/n-queens/" }] },
+                ];
+                const found = topics.find(t => t.day === day);
+                if (found) data = found;
+            } else if (day <= 90) { // Phase 4
+                const topics = [
+                    { day: 61, topic: "OOP Concepts Part 1", description: "Learn the fundamental principles of Object-Oriented Programming: Encapsulation and Abstraction.", resources: [{ name: "Kunal's OOP Playlist", url: "https://www.youtube.com/watch?v=aGtr_b4BHVE" }] },
+                    { day: 62, topic: "OOP Concepts Part 2", description: "Continue with the pillars of OOP: Inheritance and Polymorphism.", resources: [{ name: "Kunal's OOP Playlist", url: "https://www.youtube.com/watch?v=aGtr_b4BHVE" }] },
+                    { day: 63, topic: "Stacks & Queues", description: "Learn about the Stack (LIFO) and Queue (FIFO) data structures and their implementations using arrays and linked lists.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=P4K28IHP5G4" }] },
+                    { day: 64, topic: "Practice: Stacks & Queues", description: "Solve problems using stacks and queues on LeetCode.", resources: [{ name: "LeetCode", url: "https://leetcode.com/tag/stack/" }, { name: "LeetCode", url: "https://leetcode.com/tag/queue/" }] },
+                    { day: 65, topic: "Linked Lists (Singly)", description: "Master the Linked List data structure, including insertion, deletion, and traversal in a singly linked list.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=5_AZcTrP-sc" }] },
+                    { day: 66, topic: "Linked Lists (Doubly & Circular)", description: "Learn about Doubly and Circular Linked Lists and the advantages they offer.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=5_AZcTrP-sc" }] },
+                    { day: 67, topic: "Practice: Linked List Problems", description: "Solve a variety of linked list problems on LeetCode, including reversal and cycle detection.", resources: [{ name: "LeetCode", url: "https://leetcode.com/tag/linked-list/" }] },
+                    { day: 68, topic: "Trees: Binary Trees", description: "Introduction to tree data structures, focusing on Binary Trees and their properties.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=4w_t_h1i5Kc" }] },
+                    { day: 69, topic: "Trees: Binary Search Trees (BST)", description: "Learn about Binary Search Trees, a special type of binary tree that maintains a sorted order.", resources: [{ name: "Kunal's Playlist", url: "https://www.youtube.com/watch?v=4w_t_h1i5Kc" }] },
+                    { day: 70, topic: "Tree Traversal (DFS & BFS)", description: "Master the different ways to traverse a tree: Depth-First Search (In-order, Pre-order, Post-order) and Breadth-First Search (Level-order).", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/tree-traversals-inorder-preorder-and-postorder/" }] },
+                    { day: 71, topic: "Practice: Tree Problems", description: "Solve tree problems on LeetCode, focusing on traversal, validation, and construction.", resources: [{ name: "LeetCode", url: "https://leetcode.com/tag/tree/" }] },
+                    { day: 72, topic: "Heaps & Priority Queues", description: "Learn about the Heap data structure and its implementation as a Priority Queue in Java.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/heap-data-structure/" }] },
+                    { day: 73, topic: "Practice: Heap Problems", description: "Solve problems that can be efficiently solved using heaps/priority queues.", resources: [{ name: "LeetCode", url: "https://leetcode.com/tag/heap-priority-queue/" }] },
+                    { day: 80, topic: "Graphs: Introduction", description: "Begin the study of Graphs. Learn about graph representations (Adjacency Matrix/List) and basic terminology.", resources: [{ name: "Striver's Graph Series", url: "https://www.youtube.com/watch?v=M3_pLsDdeuU" }] },
+                    { day: 81, topic: "Graphs: BFS & DFS Traversal", description: "Learn the fundamental graph traversal algorithms: Breadth-First Search (BFS) and Depth-First Search (DFS).", resources: [{ name: "Striver's Graph Series", url: "https://www.youtube.com/watch?v=M3_pLsDdeuU" }] },
+                    { day: 82, topic: "Practice: Graph Problems", description: "Solve graph traversal and connectivity problems on LeetCode.", resources: [{ name: "LeetCode", url: "https://leetcode.com/tag/graph/" }] },
+                    { day: 85, topic: "Dynamic Programming: Introduction", description: "Introduction to Dynamic Programming. Understand the concepts of memoization and tabulation using the Fibonacci sequence as an example.", resources: [{ name: "Striver's DP Series", url: "https://www.youtube.com/watch?v=tyB0ztf0DNY" }] },
+                    { day: 86, topic: "Practice: 1D DP Problems", description: "Solve classic 1D Dynamic Programming problems like Climbing Stairs and House Robber.", resources: [{ name: "LeetCode", url: "https://leetcode.com/tag/dynamic-programming/" }] },
+                    { day: 90, topic: "Final Review & Next Steps", description: "Review all DSA concepts. Start participating in LeetCode contests and prepare for interviews.", resources: [{ name: "LeetCode Contests", url: "https://leetcode.com/contest/" }] },
+                ];
+                const found = topics.find(t => t.day === day);
+                if (found) data = found;
+            }
+            return data;
+        })
+    },
+    "aptitude-prep": {
+        title: "Aptitude Preparation Roadmap",
+        intro: "This guide is a comprehensive resource hub for cracking aptitude tests, a critical filtering stage in many placement processes. It is structured into modules, allowing you to focus on specific areas like Quantitative Aptitude, Logical Reasoning, and Verbal Ability, synthesizing best practices from authoritative platforms.",
+        sections: [
+            { 
+                name: "Quantitative Aptitude",
+                items: [
+                    { topic: "Number System (HCF, LCM)", description: "Master the fundamentals of number theory, including finding the Highest Common Factor (HCF) and Lowest Common Multiple (LCM), which are crucial for solving a wide range of problems.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/lcm-and-hcf-of-given-numbers/" }, { name: "IndiaBix", url: "https://www.indiabix.com/aptitude/problems-on-hcf-and-lcm/" }] },
+                    { topic: "Percentages, Profit & Loss", description: "Learn the core concepts of percentages, how to calculate profit and loss, and solve problems related to discounts, markups, and margins.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/profit-and-loss/" }, { name: "PrepInsta", url: "https://prepinsta.com/quantitative-aptitude/profit-and-loss/" }] },
+                    { topic: "Time, Speed & Distance", description: "Understand the relationship between time, speed, and distance. Solve problems involving relative speed, average speed, and scenarios with boats, streams, and trains.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/time-speed-and-distance/" }, { name: "IndiaBix", url: "https://www.indiabix.com/aptitude/time-and-distance/" }] },
+                    { topic: "Permutations & Combinations", description: "Grasp the principles of arranging and selecting items. Learn the difference between permutations (order matters) and combinations (order doesn't matter).", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/permutation-and-combination/" }, { name: "PrepInsta", url: "https://prepinsta.com/quantitative-aptitude/permutations-and-combinations/" }] },
+                    { topic: "Probability", description: "Learn the basics of probability theory, including calculating the likelihood of events, and understanding concepts like sample spaces and independent events.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/probability-in-maths/" }, { name: "IndiaBix", url: "https://www.indiabix.com/aptitude/probability/" }] },
+                ]
+            },
+            {
+                name: "Logical Reasoning",
+                items: [
+                    { topic: "Number and Letter Series", description: "Identify patterns in sequences of numbers or letters. Practice recognizing arithmetic, geometric, and other logical progressions.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/number-series-in-logical-reasoning/" }, { name: "IndiaBix", url: "https://www.indiabix.com/logical-reasoning/number-series/" }] },
+                    { topic: "Syllogisms", description: "Learn to draw logical conclusions from a set of given statements (premises). Master the use of Venn diagrams to solve these problems accurately.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/syllogism-in-reasoning/" }, { name: "PrepInsta", url: "https://prepinsta.com/logical-reasoning/syllogism/" }] },
+                    { topic: "Seating Arrangements", description: "Solve puzzles that involve arranging people or objects in linear or circular formations based on a set of conditions.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/seating-arrangement-in-reasoning/" }, { name: "Unstop", url: "https://unstop.com/blog/seating-arrangement-reasoning" }] },
+                    { topic: "Blood Relations", description: "Analyze family tree puzzles to determine the relationship between different individuals.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/blood-relations-in-reasoning/" }, { name: "IndiaBix", url: "https://www.indiabix.com/logical-reasoning/blood-relationship-test/" }] },
+                ]
+            },
+        ]
+    },
+    "core-cs": {
+        title: "Core CS Subjects Roadmap",
+        intro: "This roadmap provides a concise, interview-centric review of fundamental Computer Science subjects. The goal is to equip you with the specific knowledge required to confidently answer theoretical questions in technical interviews for software development roles, focusing on the most frequently asked topics.",
+        sections: [
+            {
+                name: "Operating Systems (OS)",
+                items: [
+                    { topic: "Processes vs. Threads", description: "Understand the fundamental difference between a process (an instance of a program) and a thread (a lightweight component of a process).", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/difference-between-process-and-thread/" }] },
+                    { topic: "CPU Scheduling", description: "Learn about different algorithms (like FCFS, SJF, Round Robin) that an operating system uses to decide which process gets to use the CPU.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/cpu-scheduling-in-operating-systems/" }] },
+                    { topic: "Process Synchronization", description: "Explore the problem of race conditions and learn about mechanisms like Mutexes and Semaphores used to ensure that concurrent processes do not interfere with each other.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/introduction-of-process-synchronization/" }] },
+                    { topic: "Deadlocks", description: "Understand what a deadlock is, the four necessary conditions for it to occur, and the strategies for preventing or avoiding them.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/introduction-of-deadlock-in-operating-system/" }] },
+                ]
+            },
+            {
+                name: "Database Management Systems (DBMS)",
+                items: [
+                    { topic: "Normalization (1NF, 2NF, 3NF)", description: "Learn the process of organizing columns and tables in a relational database to minimize data redundancy and improve data integrity.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/normal-forms-in-dbms/" }] },
+                    { topic: "SQL & Joins", description: "Master the different types of SQL Joins (INNER, LEFT, RIGHT, FULL) to combine rows from two or more tables based on a related column.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/sql-join-set-1-inner-left-right-and-full-joins/" }] },
+                    { topic: "ACID Properties", description: "Understand the four properties (Atomicity, Consistency, Isolation, Durability) that guarantee reliable processing of database transactions.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/acid-properties-in-dbms/" }] },
+                ]
+            },
+            {
+                name: "Computer Networks (CN)",
+                items: [
+                    { topic: "OSI & TCP/IP Models", description: "Learn the layered architectures of the OSI and TCP/IP models, which conceptualize how different networking protocols interact to provide network services.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/tcp-ip-model/" }] },
+                    { topic: "TCP vs. UDP", description: "Understand the key differences between the two main transport layer protocols: TCP (connection-oriented, reliable) and UDP (connectionless, fast).", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/differences-between-tcp-and-udp-in-computer-network/" }] },
+                    { topic: "HTTP, HTTPS, DNS", description: "Learn the roles of key application layer protocols: HTTP for web browsing, HTTPS for secure web browsing, and DNS for resolving domain names to IP addresses.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/application-layer-in-computer-network/" }] },
+                ]
+            },
+            {
+                name: "Object-Oriented Programming (OOPs)",
+                items: [
+                    { topic: "Encapsulation", description: "Understand the concept of bundling data (attributes) and methods that operate on the data into a single unit or class, and restricting direct access to some of an object's components.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/encapsulation-in-java/" }] },
+                    { topic: "Abstraction", description: "Learn how abstraction hides the complex implementation details and shows only the essential features of the object.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/abstraction-in-java-2/" }] },
+                    { topic: "Inheritance", description: "Grasp the mechanism by which one class can inherit the properties and methods of another class, promoting code reusability.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/inheritance-in-java/" }] },
+                    { topic: "Polymorphism", description: "Understand the ability of an object to take on many forms. Learn the difference between compile-time (method overloading) and runtime (method overriding) polymorphism.", resources: [{ name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org/polymorphism-in-java/" }] },
+                ]
+            }
+        ]
+    },
+    "resources": {
+        title: "Resource Hub",
+        intro: "This page serves as a quick-access library, aggregating high-quality external links from our roadmaps into a centralized, easy-to-navigate location. Find direct links to the best platforms for learning and practice.",
+        categories: [
+            { name: "Coding Practice Platforms", items: [{ name: "LeetCode", url: "https://leetcode.com/" }, { name: "HackerRank", url: "https://www.hackerrank.com/" }, { name: "GeeksforGeeks Practice", url: "https://practice.geeksforgeeks.org/" }] },
+            { name: "Data Science Platforms", items: [{ name: "Kaggle", url: "https://www.kaggle.com/" }, { name: "Coursera", url: "https://www.coursera.org/" }, { name: "DataCamp", url: "https://www.datacamp.com/" }] },
+            { name: "Aptitude & Placement", items: [{ name: "PrepInsta", url: "https://prepinsta.com/" }, { name: "IndiaBix", url: "https://www.indiabix.com/" }, { name: "Unstop", url: "https://unstop.com/" }] },
+            { name: "Documentation & Guides", items: [{ name: "MDN Web Docs", url: "https://developer.mozilla.org/" }, { name: "Python Official Docs", url: "https://docs.python.org/3/" }, { name: "Scikit-learn Docs", url: "https://scikit-learn.org/stable/" }] },
+        ]
+    },
+    "mock-tests": {
+        title: "Mock Test Hub",
+        intro: "This dedicated page provides direct links to various mock test and practice platforms. Use these resources to simulate real test environments and benchmark your preparation for both general aptitude and technical assessments.",
+        categories: [
+            { name: "General Aptitude Tests", items: [{ name: "Aptitude-Test.com", url: "https://www.aptitude-test.com/" }, { name: "IndiaBix", url: "https://www.indiabix.com/aptitude/questions-and-answers/" }] },
+            { name: "Technical Practice Platforms", items: [{ name: "GeeksforGeeks Company Tags", url: "https://practice.geeksforgeeks.org/company-tags" }, { name: "HackerRank Interview Prep Kit", url: "https://www.hackerrank.com/interview/interview-preparation-kit" }, { name: "LeetCode Contests", url: "https://leetcode.com/contest/" }] },
+            { name: "Mock Interview Platforms", items: [{ name: "Pramp", url: "https://www.pramp.com/" }, { name: "Interviewing.io", url: "https://interviewing.io/" }] },
+        ]
+    }
+};
+
+const contentContainer = document.getElementById('content-container');
+const navLinks = document.querySelectorAll('.nav-link');
+const sidebar = document.getElementById('sidebar');
+const mobileMenuButton = document.getElementById('mobile-menu-button');
+const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+let currentRoadmapId = '';
+
+function createLinkPill(resource) {
+    return `
+        <a href="${resource.url}" target="_blank" rel="noopener noreferrer" class="inline-block bg-emerald-100 text-emerald-800 text-sm font-medium px-3 py-1 rounded-full hover:bg-emerald-200 transition-colors duration-200">
+            ${resource.name} 🔗
+        </a>
+    `;
+}
+
+function createAccordionItem(item, index, pageId, sectionName = null) {
+    const isDayBased = !!item.day;
+    const id = isDayBased ? item.day : (sectionName ? `${sectionName}-${index}` : index);
+    const title = isDayBased ? `Day ${item.day}: ${item.topic}` : item.topic;
+    const description = item.description;
+    const resources = item.resources || [];
+    const uniqueId = `${pageId}-${id}`;
+    
+    const progress = getProgress(pageId);
+    const isChecked = progress.includes(id.toString());
+    const notes = localStorage.getItem(`notes-${uniqueId}`) || '';
+
+    return `
+        <div class="accordion-item bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <button class="accordion-header w-full text-left p-4 flex justify-between items-center hover:bg-slate-50 transition-colors duration-200 focus:outline-none">
+                <div class="flex items-center">
+                    <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 mr-4 cursor-pointer completion-checkbox" data-id="${id}" data-pageid="${pageId}" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation(); handleCheckboxChange(this);">
+                    <span class="font-semibold text-slate-800">${title}</span>
+                </div>
+                <span class="accordion-arrow text-slate-500 transform transition-transform duration-300">▼</span>
+            </button>
+            <div class="accordion-content">
+                <p class="text-slate-600 mb-4">${description}</p>
+                ${(resources.length > 0) ? `
+                <div class="border-t border-slate-200 pt-4 mb-4">
+                    <h4 class="font-semibold text-sm text-slate-700 mb-2">Resources:</h4>
+                    <div class="flex flex-wrap gap-2">
+                        ${resources.map(createLinkPill).join('')}
+                    </div>
+                </div>` : ''
+                }
+                <div class="border-t border-slate-200 pt-4">
+                     <h4 class="font-semibold text-sm text-slate-700 mb-2">📝 My Notes</h4>
+                     <textarea class="notes-textarea w-full p-2 border border-slate-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500 transition" rows="4" placeholder="Add your notes here... they will be saved automatically." data-note-id="notes-${uniqueId}">${notes}</textarea>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function createProgressTracker(pageId) {
+    const data = appData[pageId];
+    let totalItems = 0;
+    if (data.days) {
+        totalItems = data.days.length;
+    } else if (data.sections) {
+        totalItems = data.sections.reduce((acc, section) => acc + section.items.length, 0);
+    } else {
+        return '';
+    }
+
+    const completedItems = getProgress(pageId).length;
+    const percentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+    return `
+        <div id="progress-tracker" class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-slate-800">Your Progress</h3>
+                <span class="text-sm font-semibold text-emerald-600">${completedItems} / ${totalItems} Completed</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2.5">
+                <div id="progress-bar" class="bg-emerald-500 h-2.5 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+            </div>
+        </div>
+    `;
+}
+
+function updateProgressTracker(pageId) {
+    const tracker = document.getElementById('progress-tracker');
+    if (!tracker) return;
+
+    const data = appData[pageId];
+    let totalItems = 0;
+    if (data.days) {
+        totalItems = data.days.length;
+    } else if (data.sections) {
+        totalItems = data.sections.reduce((acc, section) => acc + section.items.length, 0);
+    }
+
+    const completedItems = getProgress(pageId).length;
+    const percentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+    tracker.querySelector('span').textContent = `${completedItems} / ${totalItems} Completed`;
+    tracker.querySelector('#progress-bar').style.width = `${percentage}%`;
+}
+
+function renderContent(pageId) {
+    currentRoadmapId = pageId;
+    const data = appData[pageId];
+    if (!data) {
+        contentContainer.innerHTML = `<h2 class="text-2xl font-bold">Content not found</h2>`;
+        return;
+    }
+
+    let contentHtml = `
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 mb-8">
+            <h2 class="text-3xl font-bold text-slate-900 mb-2">${data.title}</h2>
+            <p class="text-slate-600">${data.intro}</p>
+        </div>
+    `;
+
+    contentHtml += createProgressTracker(pageId);
+
+    if (data.days) {
+        contentHtml += `<div class="space-y-3">${data.days.map(day => createAccordionItem(day, null, pageId)).join('')}</div>`;
+    } else if (data.sections) {
+        contentHtml += data.sections.map(section => `
+            <div class="mb-8">
+                <h3 class="text-2xl font-bold text-slate-800 mb-4 border-b pb-2">${section.name}</h3>
+                <div class="space-y-3">
+                    ${section.items.map((item, index) => createAccordionItem(item, index, pageId, section.name)).join('')}
+                </div>
+            </div>
+        `).join('');
+    } else if (data.categories) {
+        contentHtml += `<div class="space-y-6">
+            ${data.categories.map(cat => `
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4">${cat.name}</h3>
+                    <div class="flex flex-wrap gap-3">
+                        ${cat.items.map(createLinkPill).join('')}
+                    </div>
+                </div>
+            `).join('')}
+        </div>`;
+    }
+
+    contentContainer.innerHTML = contentHtml;
+    updateActiveLink(pageId);
+}
+
+function updateActiveLink(pageId) {
+    navLinks.forEach(link => {
+        if (link.getAttribute('href') === `#${pageId}`) {
+            link.classList.add('bg-emerald-50', 'text-emerald-700', 'font-semibold');
+        } else {
+            link.classList.remove('bg-emerald-50', 'text-emerald-700', 'font-semibold');
+        }
+    });
+}
+
+function handleNavigation() {
+    const pageId = window.location.hash.substring(1) || 'data-science';
+    renderContent(pageId);
+}
+
+function getProgress(pageId) {
+    return JSON.parse(localStorage.getItem(`progress-${pageId}`) || '[]');
+}
+
+function saveProgress(pageId, progressArray) {
+    localStorage.setItem(`progress-${pageId}`, JSON.stringify(progressArray));
+}
+
+function handleCheckboxChange(checkbox) {
+    const pageId = checkbox.dataset.pageid;
+    const itemId = checkbox.dataset.id;
+    let progress = getProgress(pageId);
+
+    if (checkbox.checked) {
+        if (!progress.includes(itemId)) {
+            progress.push(itemId);
+        }
+    } else {
+        progress = progress.filter(id => id !== itemId);
+    }
+    saveProgress(pageId, progress);
+    updateProgressTracker(pageId);
+}
+
+function debounce(func, timeout = 500){
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => { func.apply(this, args); }, timeout);
+  };
+}
+
+const saveNote = debounce((noteId, content) => {
+    localStorage.setItem(noteId, content);
+});
+
+contentContainer.addEventListener('click', function(e) {
+    const header = e.target.closest('.accordion-header');
+    if (header) {
+        const item = header.parentElement;
+        item.classList.toggle('open');
+    }
+});
+
+contentContainer.addEventListener('input', function(e) {
+    if (e.target.classList.contains('notes-textarea')) {
+        const noteId = e.target.dataset.noteId;
+        const content = e.target.value;
+        saveNote(noteId, content);
+    }
+});
+
+mobileMenuButton.addEventListener('click', () => {
+    sidebar.classList.toggle('-translate-x-full');
+    mobileMenuOverlay.classList.toggle('hidden');
+});
+
+mobileMenuOverlay.addEventListener('click', () => {
+    sidebar.classList.add('-translate-x-full');
+    mobileMenuOverlay.classList.add('hidden');
+});
+
+navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+        if (window.innerWidth < 768) {
+            sidebar.classList.add('-translate-x-full');
+            mobileMenuOverlay.classList.add('hidden');
+        }
+    });
+});
+
+window.addEventListener('hashchange', handleNavigation);
+window.addEventListener('DOMContentLoaded', handleNavigation);
+</script>
+</body>
+</html>
